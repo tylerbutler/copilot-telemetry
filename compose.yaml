@@ -1,0 +1,17 @@
+name: copilot-telemetry
+
+services:
+  grafana:
+    image: grafana/otel-lgtm:latest
+    restart: unless-stopped
+    environment:
+      OTELCOL_EXTRA_ARGS: --config=file:/otel-lgtm/otelcol-ai-credits.yaml
+    ports:
+      - "4567:3000"
+      - "4318:4318"
+    volumes:
+      - telemetry-data:/data
+      - ./otelcol-ai-credits.yaml:/otel-lgtm/otelcol-ai-credits.yaml:ro
+
+volumes:
+  telemetry-data:

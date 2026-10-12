@@ -1,0 +1,27 @@
+connectors:
+  signal_to_metrics/ai_credits:
+    spans:
+      - name: github.copilot.ai.credits
+        description: AI credits consumed by Copilot model calls.
+        conditions:
+          - span.attributes["gen_ai.operation.name"] == "chat" and span.attributes["github.copilot.nano_aiu"] != nil
+        attributes:
+          - key: gen_ai.conversation.id
+          - key: gen_ai.request.model
+            optional: true
+        sum:
+          value: Double(span.attributes["github.copilot.nano_aiu"]) / 1000000000.0
+          monotonic: true
+
+processors:
+  delta_to_cumulative/ai_credits:
+    max_stale: 24h
+
+service:
+  pipelines:
+    traces:
+      exporters: [otlp_http/traces, signal_to_metrics/ai_credits]
+    metrics/ai_credits:
+      receivers: [signal_to_metrics/ai_credits]
+      processors: [delta_to_cumulative/ai_credits, batch]
+      exporters: [otlp_http/metrics]
